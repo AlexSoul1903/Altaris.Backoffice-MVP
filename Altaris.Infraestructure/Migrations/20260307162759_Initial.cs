@@ -189,7 +189,7 @@ namespace Altaris.Infraestructure.Migrations
             migrationBuilder.InsertData(
                 table: "Users",
                 columns: new[] { "Id", "CreatedAt", "CreatedBy", "Email", "FirstName", "IsActive", "LastName", "PasswordHash", "RoleId", "UpdatedAt", "UpdatedBy" },
-                values: new object[] { 1, new DateTime(2026, 3, 7, 15, 44, 36, 112, DateTimeKind.Utc).AddTicks(2591), "Sistema", "alex@gmail.com", "Admin", true, "Altairis", "$2a$11$2Be.X6EXEjZWFfcT60yVnOxal2J/vt67SVkwWr1DmZF4c8jtXLI2q", 1, null, null });
+                values: new object[] { 1, new DateTime(2026, 3, 7, 16, 27, 59, 227, DateTimeKind.Utc).AddTicks(3736), "Sistema", "alex@gmail.com", "Admin", true, "Altairis", "$2a$12$1h5d82g3htRIei37FTBbruqFMaxGhIkQjmNQXp3CVlfCz3qDPcXfe", 1, null, null });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Inventories_RoomTypeId",

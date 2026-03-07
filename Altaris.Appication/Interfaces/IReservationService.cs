@@ -6,6 +6,10 @@ namespace Altairis.Application.Interfaces
     public interface IReservationService
     {
         Task<bool> IsAvailableAsync(int roomTypeId, DateTime start, DateTime end);
-        Task<Reservation> CreateBookingAsync(CreateReservationRequest request);
+        Task<Reservation> CreateAsync(CreateReservationRequest request, int loggedInUserId);
+        Task<IEnumerable<Reservation>> GetAllAsync();
+        Task<IEnumerable<Reservation>> GetByUserIdAsync(int userId);
+        Task<Reservation?> GetByIdAsync(int id);
+        Task<bool> CancelAsync(int id);
     }
 }

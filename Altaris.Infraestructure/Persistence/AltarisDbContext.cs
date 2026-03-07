@@ -135,7 +135,7 @@ namespace Altairis.Infrastructure.Persistence
                 FirstName = "Admin",
                 LastName = "Altairis",
                 Email = "alex@gmail.com",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Altairis"),
+                PasswordHash = "$2a$12$1h5d82g3htRIei37FTBbruqFMaxGhIkQjmNQXp3CVlfCz3qDPcXfe",
                 RoleId = 1,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,

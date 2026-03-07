@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Altaris.Infraestructure.Migrations
 {
     [DbContext(typeof(AltairisDbContext))]
-    [Migration("20260307154436_Initial")]
+    [Migration("20260307162759_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -325,13 +325,13 @@ namespace Altaris.Infraestructure.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2026, 3, 7, 15, 44, 36, 112, DateTimeKind.Utc).AddTicks(2591),
+                            CreatedAt = new DateTime(2026, 3, 7, 16, 27, 59, 227, DateTimeKind.Utc).AddTicks(3736),
                             CreatedBy = "Sistema",
                             Email = "alex@gmail.com",
                             FirstName = "Admin",
                             IsActive = true,
                             LastName = "Altairis",
-                            PasswordHash = "$2a$11$2Be.X6EXEjZWFfcT60yVnOxal2J/vt67SVkwWr1DmZF4c8jtXLI2q",
+                            PasswordHash = "$2a$12$1h5d82g3htRIei37FTBbruqFMaxGhIkQjmNQXp3CVlfCz3qDPcXfe",
                             RoleId = 1
                         });
                 });
