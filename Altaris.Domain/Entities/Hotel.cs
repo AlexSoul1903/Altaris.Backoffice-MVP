@@ -8,6 +8,7 @@ namespace Altairis.Domain.Entities
         public string Name { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
+        public int Stars { get; set; }
         public bool IsActive { get; set; } = true;
 
         // Relación: Un hotel tiene muchos tipos de habitaciones

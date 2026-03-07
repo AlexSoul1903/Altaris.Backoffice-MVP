@@ -13,5 +13,7 @@ namespace Altairis.Domain.Entities
         // Relación
         public int RoomTypeId { get; set; }
         public RoomType? RoomType { get; set; }
+        public int UserId { get; set; }
+        public User? User { get; set; }
     }
 }

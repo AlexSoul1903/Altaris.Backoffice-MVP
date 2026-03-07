@@ -14,5 +14,7 @@ namespace Altairis.Domain.Entities
         // Relación con el Rol
         public int RoleId { get; set; }
         public Role? Role { get; set; }
+        // Relación: Un usuario puede hacer muchas reservas
+        public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
     }
 }
