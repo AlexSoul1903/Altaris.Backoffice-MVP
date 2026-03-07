@@ -1,6 +1,8 @@
-﻿namespace Altairis.Domain.Entities
+﻿using Altairis.Domain.Common;
+
+namespace Altairis.Domain.Entities
 {
-    public class Reservation
+    public class Reservation:AuditableEntity
     {
         public int Id { get; set; }
         public string GuestName { get; set; } = string.Empty;
