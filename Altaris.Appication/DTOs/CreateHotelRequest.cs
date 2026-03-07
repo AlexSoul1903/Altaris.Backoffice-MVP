@@ -14,6 +14,14 @@ namespace Altairis.Application.DTOs
         [Required(ErrorMessage = "La ciudad es obligatoria.")]
         public string City { get; set; } = string.Empty;
 
+        [Required(ErrorMessage = "El país es obligatorio.")]
+        [StringLength(100)]
+        public string Country { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "El teléfono de contacto es obligatorio.")]
+        [Phone(ErrorMessage = "El formato del teléfono no es válido.")] 
+        public string Phone { get; set; } = string.Empty;
+
         [Range(1, 5, ErrorMessage = "Las estrellas deben estar entre 1 y 5.")]
         public int Stars { get; set; }
     }

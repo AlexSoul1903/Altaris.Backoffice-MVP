@@ -8,6 +8,9 @@ namespace Altairis.Domain.Entities
         public string Name { get; set; } = string.Empty;
         public string Address { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
+        public string Country { get; set; } = string.Empty;
+        public string Phone { get; set; } = string.Empty; 
+
         public int Stars { get; set; }
         public bool IsActive { get; set; } = true;
 

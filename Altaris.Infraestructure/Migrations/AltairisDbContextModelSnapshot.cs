@@ -38,6 +38,11 @@ namespace Altaris.Infraestructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -49,7 +54,13 @@ namespace Altaris.Infraestructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<int>("Stars")
                         .HasColumnType("integer");
@@ -63,6 +74,20 @@ namespace Altaris.Infraestructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Hotels");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Address = "123 Ocean Drive",
+                            City = "Miami",
+                            Country = "USA",
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IsActive = true,
+                            Name = "Altairis Central Hotel",
+                            Phone = "+1-305-555-0199",
+                            Stars = 5
+                        });
                 });
 
             modelBuilder.Entity("Altairis.Domain.Entities.Inventory", b =>
@@ -123,7 +148,8 @@ namespace Altaris.Infraestructure.Migrations
 
                     b.Property<string>("GuestName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
 
                     b.Property<int>("RoomTypeId")
                         .HasColumnType("integer");
@@ -207,7 +233,8 @@ namespace Altaris.Infraestructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -220,6 +247,24 @@ namespace Altaris.Infraestructure.Migrations
                     b.HasIndex("HotelId");
 
                     b.ToTable("RoomTypes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Capacity = 4,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            HotelId = 1,
+                            Name = "Suite Presidencial"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Capacity = 2,
+                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            HotelId = 1,
+                            Name = "Habitación Estándar"
+                        });
                 });
 
             modelBuilder.Entity("Altairis.Domain.Entities.User", b =>
@@ -229,6 +274,12 @@ namespace Altaris.Infraestructure.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -252,6 +303,12 @@ namespace Altaris.Infraestructure.Migrations
                     b.Property<int>("RoleId")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
@@ -260,6 +317,20 @@ namespace Altaris.Infraestructure.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2026, 3, 7, 15, 44, 36, 112, DateTimeKind.Utc).AddTicks(2591),
+                            CreatedBy = "Sistema",
+                            Email = "alex@gmail.com",
+                            FirstName = "Admin",
+                            IsActive = true,
+                            LastName = "Altairis",
+                            PasswordHash = "$2a$11$2Be.X6EXEjZWFfcT60yVnOxal2J/vt67SVkwWr1DmZF4c8jtXLI2q",
+                            RoleId = 1
+                        });
                 });
 
             modelBuilder.Entity("Altairis.Domain.Entities.Inventory", b =>
@@ -278,7 +349,7 @@ namespace Altaris.Infraestructure.Migrations
                     b.HasOne("Altairis.Domain.Entities.RoomType", "RoomType")
                         .WithMany("Reservations")
                         .HasForeignKey("RoomTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Altairis.Domain.Entities.User", "User")
