@@ -51,6 +51,9 @@ namespace Altaris.Infraestructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("Stars")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -135,9 +138,14 @@ namespace Altaris.Infraestructure.Migrations
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("text");
 
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("RoomTypeId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Reservations");
                 });
@@ -257,7 +265,7 @@ namespace Altaris.Infraestructure.Migrations
             modelBuilder.Entity("Altairis.Domain.Entities.Inventory", b =>
                 {
                     b.HasOne("Altairis.Domain.Entities.RoomType", "RoomType")
-                        .WithMany()
+                        .WithMany("Inventories")
                         .HasForeignKey("RoomTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -268,12 +276,20 @@ namespace Altaris.Infraestructure.Migrations
             modelBuilder.Entity("Altairis.Domain.Entities.Reservation", b =>
                 {
                     b.HasOne("Altairis.Domain.Entities.RoomType", "RoomType")
-                        .WithMany()
+                        .WithMany("Reservations")
                         .HasForeignKey("RoomTypeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Altairis.Domain.Entities.User", "User")
+                        .WithMany("Reservations")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("RoomType");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Altairis.Domain.Entities.RoomType", b =>
@@ -306,6 +322,18 @@ namespace Altaris.Infraestructure.Migrations
             modelBuilder.Entity("Altairis.Domain.Entities.Role", b =>
                 {
                     b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("Altairis.Domain.Entities.RoomType", b =>
+                {
+                    b.Navigation("Inventories");
+
+                    b.Navigation("Reservations");
+                });
+
+            modelBuilder.Entity("Altairis.Domain.Entities.User", b =>
+                {
+                    b.Navigation("Reservations");
                 });
 #pragma warning restore 612, 618
         }

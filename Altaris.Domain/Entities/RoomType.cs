@@ -11,5 +11,9 @@ namespace Altairis.Domain.Entities
         // Relación con Hotel
         public int HotelId { get; set; }
         public Hotel? Hotel { get; set; }
+
+        // Relaciones: Un RoomType tiene historial de inventario y muchas reservas
+        public ICollection<Inventory> Inventories { get; set; } = new List<Inventory>();
+        public ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
     }
 }
