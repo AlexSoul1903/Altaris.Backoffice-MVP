@@ -35,5 +35,35 @@ namespace Altairis.Application.Services
 
             return hotel;
         }
+
+        public async Task<Hotel?> GetByIdAsync(int id) => await _hotelRepository.GetByIdAsync(id);
+
+        public async Task<Hotel> UpdateAsync(int id, UpdateHotelRequest request)
+        {
+            var hotel = await _hotelRepository.GetByIdAsync(id);
+            if (hotel == null) throw new Exception("Hotel no encontrado.");
+
+            hotel.Name = request.Name;
+            hotel.Address = request.Address;
+            hotel.City = request.City;
+            hotel.Stars = request.Stars;
+            hotel.IsActive = request.IsActive;
+
+            _hotelRepository.Update(hotel); 
+            await _hotelRepository.SaveChangesAsync();
+            return hotel;
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var hotel = await _hotelRepository.GetByIdAsync(id);
+            if (hotel == null) return false;
+
+            _hotelRepository.Delete(hotel); 
+            await _hotelRepository.SaveChangesAsync();
+            return true;
+        }
+
+
     }
 }

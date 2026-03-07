@@ -73,6 +73,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 // Esta sintaxis especial permite que .NET resuelva CUALQUIER entidad (Hotel, Room, etc.) automáticamente
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IHotelService, HotelService>();
+builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
+builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddHttpContextAccessor();
 var app = builder.Build();
 

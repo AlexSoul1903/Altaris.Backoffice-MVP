@@ -1,8 +1,9 @@
-﻿using System.Data;
+﻿using Altairis.Domain.Common;
+using System.Data;
 
 namespace Altairis.Domain.Entities
 {
-    public class User
+    public class User:AuditableEntity
     {
         public int Id { get; set; }
         public string FirstName { get; set; } = string.Empty;
