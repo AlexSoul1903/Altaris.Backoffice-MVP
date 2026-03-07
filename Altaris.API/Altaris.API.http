@@ -1,0 +1,6 @@
+@Altaris.API_HostAddress = http://localhost:5150
+
+GET {{Altaris.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
