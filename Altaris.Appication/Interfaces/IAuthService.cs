@@ -5,6 +5,6 @@ namespace Altairis.Application.Interfaces
     public interface IAuthService
     {
         Task<bool> RegisterAsync(RegisterRequest request);
-        // Task<string> LoginAsync(LoginRequest request); 
+        Task<LoginResponse?> LoginAsync(LoginRequest request);
     }
 }

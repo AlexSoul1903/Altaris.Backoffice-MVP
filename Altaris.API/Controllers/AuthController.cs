@@ -21,5 +21,15 @@ namespace Altairis.API.Controllers
             var result = await _authService.RegisterAsync(request);
             return Ok(new { message = "Usuario registrado con éxito" });
         }
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(LoginRequest request)
+        {
+            var response = await _authService.LoginAsync(request);
+
+            if (response == null)
+                return Unauthorized(new { message = "Credenciales inválidas" });
+
+            return Ok(response);
+        }
     }
 }
