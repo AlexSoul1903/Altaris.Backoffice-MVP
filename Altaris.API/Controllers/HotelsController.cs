@@ -7,7 +7,7 @@ namespace Altairis.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] 
+    [Authorize]
     public class HotelsController : ControllerBase
     {
         private readonly IHotelService _hotelService;
@@ -20,39 +20,78 @@ namespace Altairis.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var hotels = await _hotelService.GetAllAsync();
-            return Ok(hotels);
+            try
+            {
+                var hotels = await _hotelService.GetAllAsync();
+                return Ok(hotels);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")] // Solo los usuarios con Rol 'Admin' pueden crear hoteles
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([FromBody] CreateHotelRequest request)
         {
-            var hotel = await _hotelService.CreateAsync(request);
-            return Ok(hotel);
+            try
+            {
+                var hotel = await _hotelService.CreateAsync(request);
+                return Ok(hotel);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var hotel = await _hotelService.GetByIdAsync(id);
-            return hotel == null ? NotFound() : Ok(hotel);
+            try
+            {
+                var hotel = await _hotelService.GetByIdAsync(id);
+                return hotel == null
+                    ? NotFound(new { message = "Hotel no encontrado." })
+                    : Ok(hotel);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateHotelRequest request)
         {
-            try { return Ok(await _hotelService.UpdateAsync(id, request)); }
-            catch (Exception ex) { return NotFound(ex.Message); }
+            try
+            {
+                var updatedHotel = await _hotelService.UpdateAsync(id, request);
+                return Ok(updatedHotel);
+            }
+            catch (Exception ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
         }
 
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
-            var deleted = await _hotelService.DeleteAsync(id);
-            return deleted ? NoContent() : NotFound();
+            try
+            {
+                var deleted = await _hotelService.DeleteAsync(id);
+                return deleted
+                    ? NoContent()
+                    : NotFound(new { message = "No se pudo eliminar el hotel porque no existe." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

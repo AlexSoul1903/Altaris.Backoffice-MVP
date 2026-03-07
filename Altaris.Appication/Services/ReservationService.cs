@@ -3,43 +3,97 @@ using Altairis.Application.Interfaces;
 using Altairis.Domain.Entities;
 using Altairis.Domain.Interfaces;
 
-public class ReservationService : IReservationService
+namespace Altairis.Application.Services
 {
-    private readonly IGenericRepository<Reservation> _resRepo;
-    private readonly IGenericRepository<Inventory> _invRepo;
-
-    public ReservationService(IGenericRepository<Reservation> resRepo, IGenericRepository<Inventory> invRepo)
+    public class ReservationService : IReservationService
     {
-        _resRepo = resRepo;
-        _invRepo = invRepo;
-    }
+        private readonly IGenericRepository<Reservation> _resRepo;
+        private readonly IGenericRepository<Inventory> _invRepo;
 
-    public async Task<bool> IsAvailableAsync(int roomTypeId, DateTime start, DateTime end)
-    {
-        var inventories = await _invRepo.GetAllAsync();
-        // Filtramos inventario para el tipo de habitación y rango de fechas
-        var dailyStock = inventories.Where(i => i.RoomTypeId == roomTypeId && i.Date >= start && i.Date < end);
-
-        // Si falta algún día en el inventario o algún día tiene 0 disponibles, no hay cupo
-        return dailyStock.Count() == (end - start).Days && dailyStock.All(i => i.AvailableRooms > 0);
-    }
-
-    public async Task<Reservation> CreateBookingAsync(CreateReservationRequest request)
-    {
-        if (!await IsAvailableAsync(request.RoomTypeId, request.CheckIn, request.CheckOut))
-            throw new Exception("No hay disponibilidad para las fechas seleccionadas.");
-
-        var reservation = new Reservation
+        public ReservationService(IGenericRepository<Reservation> resRepo, IGenericRepository<Inventory> invRepo)
         {
-            RoomTypeId = request.RoomTypeId,
-            GuestName = request.GuestName,
-            CheckIn = request.CheckIn,
-            CheckOut = request.CheckOut,
-            Status = "Confirmed"
-        };
+            _resRepo = resRepo;
+            _invRepo = invRepo;
+        }
+        public async Task<IEnumerable<Reservation>> GetAllAsync() => await _resRepo.GetAllAsync();
 
-        await _resRepo.AddAsync(reservation);
-        await _resRepo.SaveChangesAsync();
-        return reservation;
+        public async Task<IEnumerable<Reservation>> GetByUserIdAsync(int userId)
+        {
+            var all = await _resRepo.GetAllAsync();
+            return all.Where(r => r.UserId == userId);
+        }
+
+        public async Task<Reservation?> GetByIdAsync(int id) => await _resRepo.GetByIdAsync(id);
+
+        public async Task<bool> CancelAsync(int id)
+        {
+            var res = await _resRepo.GetByIdAsync(id);
+            if (res == null || res.Status == "Cancelada") return false;
+
+            // 1. Devolver el stock al inventario
+            var inventories = await _invRepo.GetAllAsync();
+            var relatedDays = inventories.Where(i => i.RoomTypeId == res.RoomTypeId
+                                                && i.Date >= res.CheckIn.Date
+                                                && i.Date < res.CheckOut.Date);
+
+            foreach (var day in relatedDays)
+            {
+                day.AvailableRooms += 1; // Restauramos la habitación
+                _invRepo.Update(day);
+            }
+
+            // 2. Actualizar estado de la reserva
+            res.Status = "Cancelada";
+            _resRepo.Update(res);
+
+            await _resRepo.SaveChangesAsync();
+            return true;
+        }
+
+   
+        public async Task<bool> IsAvailableAsync(int roomTypeId, DateTime start, DateTime end)
+        {
+            var inventories = await _invRepo.GetAllAsync();
+            var dailyStock = inventories.Where(i => i.RoomTypeId == roomTypeId && i.Date >= start.Date && i.Date < end.Date);
+
+            int totalNights = (end.Date - start.Date).Days;
+            return dailyStock.Count() == totalNights && dailyStock.All(i => i.AvailableRooms > 0);
+        }
+
+        public async Task<Reservation> CreateAsync(CreateReservationRequest request, int loggedInUserId)
+        {
+            if (request.CheckOut.Date <= request.CheckIn.Date)
+                throw new Exception("La estancia debe ser de al menos una noche.");
+
+            var available = await IsAvailableAsync(request.RoomTypeId, request.CheckIn, request.CheckOut);
+            if (!available)
+                throw new Exception("No hay disponibilidad para las fechas seleccionadas.");
+
+            var inventories = await _invRepo.GetAllAsync();
+            var dailyStock = inventories.Where(i => i.RoomTypeId == request.RoomTypeId
+                                               && i.Date >= request.CheckIn.Date
+                                               && i.Date < request.CheckOut.Date);
+
+            foreach (var day in dailyStock)
+            {
+                day.AvailableRooms -= 1;
+                _invRepo.Update(day);
+            }
+
+            var reservation = new Reservation
+            {
+                RoomTypeId = request.RoomTypeId,
+                GuestName = request.GuestName,
+                CheckIn = request.CheckIn,
+                CheckOut = request.CheckOut,
+                UserId = loggedInUserId,
+                Status = "Confirmada"
+            };
+
+            await _resRepo.AddAsync(reservation);
+            await _resRepo.SaveChangesAsync();
+
+            return reservation;
+        }
     }
 }
