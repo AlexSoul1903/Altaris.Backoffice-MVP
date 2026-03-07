@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Altaris.Appication\Altaris.Application.csproj" />
     <ProjectReference Include="..\Altaris.Domain\Altaris.Domain.csproj" />
   </ItemGroup>
