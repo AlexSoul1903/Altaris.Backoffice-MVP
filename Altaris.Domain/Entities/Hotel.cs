@@ -1,6 +1,8 @@
-﻿namespace Altairis.Domain.Entities
+﻿using Altairis.Domain.Common;
+
+namespace Altairis.Domain.Entities
 {
-    public class Hotel
+    public class Hotel:AuditableEntity
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;

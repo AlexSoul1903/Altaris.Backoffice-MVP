@@ -1,6 +1,8 @@
-﻿namespace Altairis.Domain.Entities
+﻿using Altairis.Domain.Common;
+
+namespace Altairis.Domain.Entities
 {
-    public class Inventory
+    public class Inventory:AuditableEntity
     {
         public int Id { get; set; }
         public DateTime Date { get; set; }
