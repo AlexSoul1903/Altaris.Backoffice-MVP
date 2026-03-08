@@ -8,6 +8,7 @@ namespace Altairis.Application.Interfaces
         Task<bool> UpdateProfileAsync(int userId, UpdateProfileRequest request);
         Task<IEnumerable<object>> GetAllUsersAsync();
         Task<bool> UpdateUserAdminAsync(int id, UpdateUserAdminRequest request);
+        Task<bool> DeleteUserAsync(int id);
 
     }
 }

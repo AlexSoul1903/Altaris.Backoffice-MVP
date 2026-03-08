@@ -3,45 +3,46 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AxiosError } from "axios";
-import api from "@/services/api"; // O "../../services/api" según te haya funcionado
+import api from "@/services/api";
 import Link from "next/link";
+import Toast from "@/components/Toast";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  // Estado para el Toast
+  const [toast, setToast] = useState<{ message: string, type: "success" | "error" } | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setToast(null); // Limpiamos errores previos
     setLoading(true);
 
     try {
       const response = await api.post("/Auth/login", { email, password });
-    localStorage.setItem("altairis_token", response.data.token);
-localStorage.setItem("altairis_role", response.data.role);
-localStorage.setItem("altairis_email", response.data.email);
+      localStorage.setItem("altairis_token", response.data.token);
+      localStorage.setItem("altairis_role", response.data.role);
+      localStorage.setItem("altairis_email", response.data.email);
       router.push("/dashboard");
     } catch (err) {
       const axiosError = err as AxiosError<{ message: string }>;
-      setError(
-        axiosError.response?.data?.message || "Error al iniciar sesión. Intenta de nuevo."
-      );
+      // Mostramos el error con el Toast
+      setToast({ 
+        message: axiosError.response?.data?.message || "Error al iniciar sesión. Verifica tus credenciales.", 
+        type: "error" 
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-
-    <div className="min-h-screen flex items-center justify-center bg-stone-950">
-      
-
-      <div className="bg-white p-10 rounded-[2rem] shadow-xl w-full max-w-md border border-slate-100">
+    <div className="min-h-screen flex items-center justify-center bg-stone-950 relative overflow-hidden">
+      <div className="bg-white p-10 rounded-[2rem] shadow-xl w-full max-w-md border border-slate-100 z-10">
         
-
         <div className="text-center mb-10">
           <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">
             Altairis <span className="text-amber-500">.</span>
@@ -52,7 +53,7 @@ localStorage.setItem("altairis_email", response.data.email);
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-2 ml-1">
-            Correo
+              Correo Electrónico
             </label>
             <input
               type="email"
@@ -78,12 +79,6 @@ localStorage.setItem("altairis_email", response.data.email);
             />
           </div>
 
-          {error && (
-            <div className="p-4 bg-red-50 text-red-600 text-sm font-medium rounded-xl border border-red-100 text-center">
-              {error}
-            </div>
-          )}
-
           <button
             type="submit"
             disabled={loading}
@@ -93,21 +88,27 @@ localStorage.setItem("altairis_email", response.data.email);
           </button>
         </form>
 
-
         <div className="mt-8 flex flex-col items-end space-y-3 text-sm font-medium">
-         
-       <Link 
-    href="/register" 
-    className="text-slate-500 hover:text-slate-900 flex items-center gap-2 transition-colors group"
-  >
-    <span className="text-amber-500 border border-amber-500 rounded-full w-4 h-4 flex items-center justify-center text-[10px] group-hover:bg-amber-500 group-hover:text-white transition-all">
-      ›
-    </span> 
-    Registrarme
-  </Link>
+          <Link 
+            href="/register" 
+            className="text-slate-500 hover:text-slate-900 flex items-center gap-2 transition-colors group"
+          >
+            <span className="text-amber-500 border border-amber-500 rounded-full w-4 h-4 flex items-center justify-center text-[10px] group-hover:bg-amber-500 group-hover:text-white transition-all">
+              ›
+            </span> 
+            Registrarme
+          </Link>
         </div>
-
       </div>
+
+  
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
     </div>
   );
 }

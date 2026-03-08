@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AxiosError } from "axios";
 import api from "@/services/api";
-import Select from "@/components/Select"; // Importamos nuestro componente reutilizable
+import Select from "@/components/Select"; 
+import Toast from "@/components/Toast"; 
 
 export default function RegisterPage() {
   const router = useRouter();
   
-  // Estados del formulario (coinciden con tu DTO en C#)
+  // Estados del formulario
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -18,16 +19,18 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [roleId, setRoleId] = useState<number>(2); // 2 = Agente por defecto
   
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // Estado para el Toast
+  const [toast, setToast] = useState<{ message: string, type: "success" | "error" } | null>(null);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setToast(null); // Limpiamos errores previos
     
     if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden.");
+      setToast({ message: "Las contraseñas no coinciden.", type: "error" });
       return;
     }
 
@@ -49,17 +52,18 @@ export default function RegisterPage() {
       
     } catch (err) {
       const axiosError = err as AxiosError<{ message: string }>;
-      setError(
-        axiosError.response?.data?.message || "Error al crear la cuenta. Verifica los datos."
-      );
+      setToast({ 
+        message: axiosError.response?.data?.message || "Error al crear la cuenta. Verifica los datos.", 
+        type: "error" 
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black py-10">
-      <div className="bg-white p-12 rounded-[3rem] shadow-2xl w-full max-w-lg">
+    <div className="min-h-screen flex items-center justify-center bg-black py-10 relative overflow-hidden">
+      <div className="bg-white p-12 rounded-[3rem] shadow-2xl w-full max-w-lg z-10">
         
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-slate-900 tracking-tight">
@@ -69,14 +73,13 @@ export default function RegisterPage() {
         </div>
 
         {success ? (
-          <div className="p-6 bg-green-50 text-green-700 text-center rounded-2xl border border-green-200">
+          <div className="p-6 bg-green-50 text-green-700 text-center rounded-2xl border border-green-200 animate-in zoom-in-95 duration-300">
             <h3 className="font-bold text-lg mb-1">¡Cuenta creada!</h3>
             <p className="text-sm">Redirigiendo al inicio de sesión...</p>
           </div>
         ) : (
           <form onSubmit={handleRegister} className="space-y-5">
             
-            {/* NUESTRO COMPONENTE REUTILIZABLE */}
             <Select 
               label="Nivel de Acceso"
               options={[
@@ -160,12 +163,6 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {error && (
-              <div className="p-4 bg-red-50 text-red-600 text-sm font-medium rounded-2xl text-center border border-red-100">
-                {error}
-              </div>
-            )}
-
             <button
               type="submit"
               disabled={loading}
@@ -186,8 +183,16 @@ export default function RegisterPage() {
             </Link>
           </div>
         )}
-
       </div>
+
+  
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
     </div>
   );
 }

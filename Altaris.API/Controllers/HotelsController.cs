@@ -83,14 +83,21 @@ namespace Altairis.API.Controllers
         {
             try
             {
-                var deleted = await _hotelService.DeleteAsync(id);
-                return deleted
-                    ? NoContent()
-                    : NotFound(new { message = "No se pudo eliminar el hotel porque no existe." });
+                var success = await _hotelService.DeleteAsync(id);
+                return success
+                    ? Ok(new { message = "Hotel eliminado correctamente." })
+                    : NotFound(new { message = "Hotel no encontrado." });
             }
             catch (Exception ex)
             {
-                return BadRequest(new { message = ex.Message });
+                // Atrapamos el error de clave foránea si el hotel tiene habitaciones
+                if (ex.InnerException != null && ex.InnerException.Message.Contains("violates foreign key constraint"))
+                {
+                    return BadRequest(new { message = "No se puede eliminar este hotel porque tiene habitaciones, reservas o inventario asociado. Te recomendamos editarlo y cambiar su estado a 'Inactivo'." });
+                }
+
+                var errorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return BadRequest(new { message = errorMessage });
             }
         }
     }

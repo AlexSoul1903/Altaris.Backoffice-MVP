@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect } from "react";
 import api from "@/services/api";
 import { AxiosError } from "axios";
+import Toast from "@/components/Toast"; // Importamos el Toast
 
 export default function SettingsPage() {
   const [firstName, setFirstName] = useState("");
@@ -10,12 +12,13 @@ export default function SettingsPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const [message, setMessage] = useState({ type: "", text: "" });
+  
+  // Estado para el componente Toast (reemplaza a la variable 'message' antigua)
+  const [toast, setToast] = useState<{ message: string, type: "success" | "error" } | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        // Asumiendo que crearás un endpoint GET /api/Users/profile
         const response = await api.get("/Users/profile");
         const { firstName, lastName, email } = response.data;
         setFirstName(firstName);
@@ -23,6 +26,7 @@ export default function SettingsPage() {
         setEmail(email);
       } catch (err) {
         console.error("Error al cargar perfil", err);
+        setToast({ message: "No se pudo cargar la información de tu perfil.", type: "error" });
       } finally {
         setLoading(false);
       }
@@ -33,22 +37,25 @@ export default function SettingsPage() {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setUpdating(true);
-    setMessage({ type: "", text: "" });
+    setToast(null); // Limpiamos notificaciones previas
 
     try {
       await api.put("/Users/profile", { firstName, lastName });
-      setMessage({ type: "success", text: "Perfil actualizado correctamente." });
-    } catch (err) {
-      setMessage({ type: "error", text: "No se pudo actualizar el perfil." });
+      setToast({ message: "Perfil actualizado correctamente.", type: "success" });
+    } catch (err: any) {
+      // Capturamos el error real del backend si lo hay
+      const errorMessage = err.response?.data?.message || err.response?.data?.title || "No se pudo actualizar el perfil.";
+      console.error("Error al actualizar:", err.response?.data);
+      setToast({ message: errorMessage, type: "error" });
     } finally {
       setUpdating(false);
     }
   };
 
-  if (loading) return <div className="p-10">Cargando perfil...</div>;
+  if (loading) return <div className="p-10 font-bold text-slate-500 italic">Cargando perfil...</div>;
 
   return (
-    <div className="max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-2xl animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
       <h1 className="text-3xl font-extrabold text-slate-900 mb-2">Mi Perfil</h1>
       <p className="text-slate-500 mb-8 font-medium">Gestiona tu información personal y cuenta.</p>
 
@@ -60,7 +67,8 @@ export default function SettingsPage() {
               type="text" 
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              className="w-full px-5 py-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-amber-500 transition-all"
+              className="w-full px-5 py-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-amber-500 transition-all text-slate-900 font-medium"
+              required
             />
           </div>
           <div>
@@ -69,7 +77,8 @@ export default function SettingsPage() {
               type="text" 
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              className="w-full px-5 py-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-amber-500 transition-all"
+              className="w-full px-5 py-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-amber-500 transition-all text-slate-900 font-medium"
+              required
             />
           </div>
         </div>
@@ -80,24 +89,27 @@ export default function SettingsPage() {
             type="email" 
             value={email}
             disabled
-            className="w-full px-5 py-4 bg-slate-100 text-slate-500 rounded-2xl border-none cursor-not-allowed"
+            className="w-full px-5 py-4 bg-slate-100 text-slate-500 font-medium rounded-2xl border-none cursor-not-allowed opacity-70"
           />
         </div>
-
-        {message.text && (
-          <div className={`p-4 rounded-2xl text-sm font-bold text-center ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-            {message.text}
-          </div>
-        )}
 
         <button 
           type="submit"
           disabled={updating}
-          className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-4 px-8 rounded-2xl transition-all shadow-md"
+          className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-4 px-8 rounded-2xl transition-all shadow-md active:scale-95"
         >
           {updating ? "Guardando..." : "Guardar Cambios"}
         </button>
       </form>
+
+      {/* Renderizamos el Toast al final del contenedor */}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type} 
+          onClose={() => setToast(null)} 
+        />
+      )}
     </div>
   );
 }

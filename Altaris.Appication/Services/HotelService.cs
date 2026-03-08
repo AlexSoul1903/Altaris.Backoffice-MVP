@@ -26,6 +26,8 @@ namespace Altairis.Application.Services
                 Name = request.Name,
                 Address = request.Address,
                 City = request.City,
+                Country = request.Country, 
+                Phone= request.Phone,
                 Stars = request.Stars,
                 IsActive = true
             };
@@ -48,6 +50,8 @@ namespace Altairis.Application.Services
             hotel.City = request.City;
             hotel.Stars = request.Stars;
             hotel.IsActive = request.IsActive;
+            hotel.Country = request.Country;
+            hotel.Phone = request.Phone;
 
             _hotelRepository.Update(hotel); 
             await _hotelRepository.SaveChangesAsync();

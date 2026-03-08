@@ -28,6 +28,16 @@ namespace Altairis.Application.Services
             };
         }
 
+        public async Task<bool> DeleteUserAsync(int id)
+        {
+            var user = await _userRepo.GetByIdAsync(id); 
+            if (user == null) return false;
+
+            _userRepo.Delete(user);
+            await _userRepo.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<bool> UpdateUserAdminAsync(int id, UpdateUserAdminRequest request)
         {
             var user = await _userRepo.GetByIdAsync(id);

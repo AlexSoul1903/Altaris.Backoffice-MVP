@@ -20,7 +20,7 @@ namespace Altairis.API.Controllers
 
        
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Agent")]
         public async Task<IActionResult> GetAll()
         {
             try { return Ok(await _reservationService.GetAllAsync()); }

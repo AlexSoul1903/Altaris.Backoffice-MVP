@@ -54,5 +54,34 @@ namespace Altairis.API.Controllers
             var users = await _userService.GetAllUsersAsync();
             return Ok(users);
         }
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin, Administrador")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                // Verificamos que el usuario no intente borrarse a sí mismo (opcional pero recomendado)
+                var currentUserIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (currentUserIdClaim != null && int.Parse(currentUserIdClaim) == id)
+                {
+                    return BadRequest(new { message = "No puedes eliminar tu propia cuenta de administrador." });
+                }
+
+                var result = await _userService.DeleteUserAsync(id);
+                return result
+                    ? Ok(new { message = "Usuario eliminado correctamente." })
+                    : NotFound(new { message = "Usuario no encontrado." });
+            }
+            catch (Exception ex)
+            {
+
+                if (ex.InnerException != null && ex.InnerException.Message.Contains("violates foreign key constraint"))
+                {
+                    return BadRequest(new { message = "No se puede eliminar este usuario porque tiene reservas registradas en el sistema. Te sugerimos cambiar su contraseña o rol para revocar su acceso." });
+                }
+
+                return BadRequest(new { message = "Error al intentar eliminar el usuario." });
+            }
+        }
     }
 }

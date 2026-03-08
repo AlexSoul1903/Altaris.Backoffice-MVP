@@ -135,7 +135,6 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Acciones Rápidas DINÁMICAS */}
         <div className="lg:col-span-1 bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100">
           <h2 className="text-xl font-bold text-slate-900 mb-6">Acciones rápidas</h2>
           <div className="grid grid-cols-1 gap-4">
@@ -154,7 +153,11 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 bg-white p-8 rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold text-slate-900">Actividad Reciente</h2>
-            <button className="text-sm font-bold text-amber-500 hover:text-amber-600 transition-colors">
+            {/* 🔥 Le agregamos el router.push al botón de Ver todo */}
+            <button 
+              onClick={() => router.push("/dashboard/reservations")} 
+              className="text-sm font-bold text-amber-500 hover:text-amber-600 transition-colors"
+            >
               Ver todo ›
             </button>
           </div>
@@ -177,9 +180,11 @@ export default function DashboardPage() {
                       <td className="py-5 font-medium text-slate-600">{item.guest}</td>
                       <td className="py-5 font-medium text-slate-600">{item.room}</td>
                       <td className="py-5">
+                        {/* 🔥 CORREGIMOS EL ESPAÑOL Y AÑADIMOS EL ROJO PARA CANCELADAS */}
                         <span className={`px-4 py-1.5 rounded-full text-xs font-bold ${
-                          item.status === 'Confirmed' ? 'bg-green-100 text-green-700' : 
-                          item.status === 'Pending' ? 'bg-amber-100 text-amber-700' : 
+                          (item.status === 'Confirmed' || item.status === 'Confirmada') ? 'bg-green-100 text-green-700' : 
+                          (item.status === 'Pending' || item.status === 'Pendiente') ? 'bg-amber-100 text-amber-700' : 
+                          (item.status === 'Cancelled' || item.status === 'Cancelada') ? 'bg-red-100 text-red-700' :
                           'bg-slate-100 text-slate-700'
                         }`}>
                           {item.status}
