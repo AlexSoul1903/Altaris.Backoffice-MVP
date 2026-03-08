@@ -43,8 +43,25 @@ namespace Altairis.API.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
-            var deleted = await _roomTypeService.DeleteAsync(id);
-            return deleted ? NoContent() : NotFound();
+            try
+            {
+                var success = await _roomTypeService.DeleteAsync(id);
+                return success
+                    ? Ok(new { message = "Tipo de habitación eliminado correctamente." })
+                    : NotFound(new { message = "Tipo de habitación no encontrado." });
+            }
+            catch (Exception ex)
+            {
+                // Atrapamos el error de llave foránea (relaciones)
+                if (ex.InnerException != null && ex.InnerException.Message.Contains("violates foreign key constraint"))
+                {
+                    return BadRequest(new { message = "No se puede eliminar esta habitación porque ya tiene reservas o inventario asociado. Si ya no se usa, te recomendamos editar su nombre para indicarlo (Ej. 'Inactiva - Suite')." });
+                }
+
+                // Para cualquier otro error genérico:
+                var errorMessage = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return BadRequest(new { message = errorMessage });
+            }
         }
     }
 }

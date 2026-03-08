@@ -18,7 +18,7 @@ namespace Altairis.API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Agent")]
         public async Task<IActionResult> GetAll()
         {
             try { return Ok(await _inventoryService.GetAllAsync()); }
@@ -46,12 +46,17 @@ namespace Altairis.API.Controllers
         {
             try
             {
+              
                 var success = await _inventoryService.DeleteAsync(id);
-                return success
-                    ? NoContent()
-                    : NotFound(new { message = "Registro de inventario no encontrado." });
+                if (!success) return NotFound(new { message = "Inventario no encontrado." });
+
+                return Ok(new { message = "Registro de inventario eliminado correctamente." });
             }
-            catch (Exception ex) { return BadRequest(new { message = ex.Message }); }
+            catch (Exception ex)
+            {
+              
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

@@ -7,7 +7,7 @@ namespace Altairis.Application.Services
 {
     public class DashboardService : IDashboardService
     {
-        // 1. Inyectamos los 3 repositorios necesarios
+       
         private readonly IGenericRepository<Reservation> _reservationRepo;
         private readonly IGenericRepository<Inventory> _inventoryRepo;
         private readonly IGenericRepository<RoomType> _roomTypeRepo;
@@ -15,7 +15,7 @@ namespace Altairis.Application.Services
         public DashboardService(
             IGenericRepository<Reservation> reservationRepo,
             IGenericRepository<Inventory> inventoryRepo,
-            IGenericRepository<RoomType> roomTypeRepo) 
+            IGenericRepository<RoomType> roomTypeRepo)
         {
             _reservationRepo = reservationRepo;
             _inventoryRepo = inventoryRepo;
@@ -29,24 +29,29 @@ namespace Altairis.Application.Services
 
             var allReservations = await _reservationRepo.GetAllAsync();
             var allInventories = await _inventoryRepo.GetAllAsync();
-            var allRoomTypes = await _roomTypeRepo.GetAllAsync(); // Traemos el catálogo de habitaciones
+            var allRoomTypes = await _roomTypeRepo.GetAllAsync(); 
 
 
             // a. Reservas Activas 
-            int activeReservations = allReservations.Count(r => r.Status == "Confirmed");
+            int activeReservations = allReservations.Count(r =>
+                r.Status?.ToLower().Trim() == "confirmada" ||
+                r.Status?.ToLower().Trim() == "confirmed");
 
             // b. Check-ins pendientes hoy 
             int pendingCheckIns = allReservations.Count(r =>
-                r.CheckIn.Date == today && r.Status == "Confirmed");
+                r.CheckIn.Date == today &&
+                (r.Status?.ToLower().Trim() == "confirmada" || r.Status?.ToLower().Trim() == "confirmed"));
 
             // c. Habitaciones disponibles 
             int availableRooms = allInventories
                 .Where(i => i.Date.Date == today)
                 .Sum(i => i.AvailableRooms);
 
-            // d. KPI OPERATIVO: Reservas del Mes 
+            // d. KPI OPERATIVO: Reservas del Mes (Excluyendo canceladas en ambos idiomas)
             int monthlyReservations = allReservations
-                .Count(r => r.CreatedAt >= startOfMonth && r.Status != "Cancelled");
+                .Count(r => r.CreatedAt >= startOfMonth &&
+                            r.Status?.ToLower().Trim() != "cancelada" &&
+                            r.Status?.ToLower().Trim() != "cancelled");
 
             // 4. Actividad Reciente (Últimas 5)
             var recentActivities = allReservations
@@ -57,17 +62,17 @@ namespace Altairis.Application.Services
                     Id = $"RES-{r.Id:D3}",
                     Guest = r.GuestName,
                     Room = allRoomTypes.FirstOrDefault(rt => rt.Id == r.RoomTypeId)?.Name ?? "Sin Asignar",
-                    Status = r.Status,
+                    Status = r.Status, 
                     Date = r.CheckIn.ToString("dd/MM/yyyy HH:mm")
                 }).ToList();
 
-         
+
             return new DashboardSummaryDto
             {
                 ActiveReservations = activeReservations,
                 AvailableRooms = availableRooms,
                 PendingCheckIns = pendingCheckIns,
-                MonthlyReservations = monthlyReservations, 
+                MonthlyReservations = monthlyReservations,
                 RecentActivity = recentActivities
             };
         }

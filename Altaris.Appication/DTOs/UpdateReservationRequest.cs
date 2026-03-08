@@ -4,6 +4,7 @@ namespace Altairis.Application.DTOs
 {
     public class UpdateRoomTypeRequest
     {
+        public int HotelId { get; set; }
         [Required]
         public string Name { get; set; } = string.Empty;
 

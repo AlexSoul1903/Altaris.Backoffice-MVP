@@ -9,12 +9,21 @@ namespace Altairis.Application.Services
     {
         private readonly IGenericRepository<Reservation> _resRepo;
         private readonly IGenericRepository<Inventory> _invRepo;
+        private readonly IGenericRepository<RoomType> _roomTypeRepo;
+        private readonly IGenericRepository<Hotel> _hotelRepo;
 
-        public ReservationService(IGenericRepository<Reservation> resRepo, IGenericRepository<Inventory> invRepo)
+        public ReservationService(
+            IGenericRepository<Reservation> resRepo,
+            IGenericRepository<Inventory> invRepo,
+            IGenericRepository<RoomType> roomTypeRepo,
+            IGenericRepository<Hotel> hotelRepo)
         {
             _resRepo = resRepo;
             _invRepo = invRepo;
+            _roomTypeRepo = roomTypeRepo;
+            _hotelRepo = hotelRepo;
         }
+
         public async Task<IEnumerable<Reservation>> GetAllAsync() => await _resRepo.GetAllAsync();
 
         public async Task<IEnumerable<Reservation>> GetByUserIdAsync(int userId)
@@ -30,39 +39,41 @@ namespace Altairis.Application.Services
             var res = await _resRepo.GetByIdAsync(id);
             if (res == null || res.Status == "Cancelada") return false;
 
-            // 1. Devolver el stock al inventario
             var inventories = await _invRepo.GetAllAsync();
             var relatedDays = inventories.Where(i => i.RoomTypeId == res.RoomTypeId
                                                 && i.Date >= res.CheckIn.Date
-                                                && i.Date < res.CheckOut.Date);
+                                                && i.Date < res.CheckOut.Date).ToList();
 
             foreach (var day in relatedDays)
             {
-                day.AvailableRooms += 1; // Restauramos la habitación
+                day.AvailableRooms += 1;
                 _invRepo.Update(day);
             }
 
-            // 2. Actualizar estado de la reserva
             res.Status = "Cancelada";
             _resRepo.Update(res);
-
             await _resRepo.SaveChangesAsync();
             return true;
         }
 
-
         public async Task<bool> IsAvailableAsync(int roomTypeId, DateTime start, DateTime end)
         {
             var inventories = await _invRepo.GetAllAsync();
-            var dailyStock = inventories.Where(i => i.RoomTypeId == roomTypeId && i.Date >= start.Date && i.Date < end.Date);
+            var dailyStock = inventories.Where(i => i.RoomTypeId == roomTypeId && i.Date >= start.Date && i.Date < end.Date).ToList();
 
             int totalNights = (end.Date - start.Date).Days;
-            return dailyStock.Count() == totalNights && dailyStock.All(i => i.AvailableRooms > 0);
+            return dailyStock.Count == totalNights && dailyStock.All(i => i.AvailableRooms > 0);
         }
 
         public async Task<Reservation> CreateAsync(CreateReservationRequest request, int loggedInUserId)
         {
-            // 🚀 MAGIA: Forzamos a UTC para que PostgreSQL no explote
+            var roomType = await _roomTypeRepo.GetByIdAsync(request.RoomTypeId);
+            if (roomType == null) throw new Exception("La habitación seleccionada no existe.");
+
+            var hotel = await _hotelRepo.GetByIdAsync(roomType.HotelId);
+            if (hotel == null || !hotel.IsActive)
+                throw new Exception("No se pueden crear reservas para una habitación de un hotel inactivo.");
+
             var checkInUtc = DateTime.SpecifyKind(request.CheckIn, DateTimeKind.Utc);
             var checkOutUtc = DateTime.SpecifyKind(request.CheckOut, DateTimeKind.Utc);
 
@@ -71,12 +82,12 @@ namespace Altairis.Application.Services
 
             var available = await IsAvailableAsync(request.RoomTypeId, checkInUtc, checkOutUtc);
             if (!available)
-                throw new Exception("No hay disponibilidad para las fechas seleccionadas.");
+                throw new Exception("No hay disponibilidad o el inventario no ha sido creado para las fechas seleccionadas.");
 
             var inventories = await _invRepo.GetAllAsync();
             var dailyStock = inventories.Where(i => i.RoomTypeId == request.RoomTypeId
                                                && i.Date >= checkInUtc.Date
-                                               && i.Date < checkOutUtc.Date);
+                                               && i.Date < checkOutUtc.Date).ToList();
 
             foreach (var day in dailyStock)
             {
@@ -88,8 +99,8 @@ namespace Altairis.Application.Services
             {
                 RoomTypeId = request.RoomTypeId,
                 GuestName = request.GuestName,
-                CheckIn = checkInUtc,   // Usamos la variable segura
-                CheckOut = checkOutUtc, // Usamos la variable segura
+                CheckIn = checkInUtc,
+                CheckOut = checkOutUtc,
                 UserId = loggedInUserId,
                 Status = "Confirmada"
             };
@@ -100,80 +111,120 @@ namespace Altairis.Application.Services
             return reservation;
         }
 
+ 
         public async Task<Reservation> UpdateAsync(int id, UpdateReservationRequest request)
         {
             var res = await _resRepo.GetByIdAsync(id);
             if (res == null) throw new Exception("Reserva no encontrada.");
 
-         
+            if (res.RoomTypeId != request.RoomTypeId)
+            {
+                var newRoomType = await _roomTypeRepo.GetByIdAsync(request.RoomTypeId);
+                if (newRoomType == null) throw new Exception("La habitación destino no existe.");
+
+                var newHotel = await _hotelRepo.GetByIdAsync(newRoomType.HotelId);
+                if (newHotel == null || !newHotel.IsActive)
+                    throw new Exception("No se puede mover la reserva a un hotel inactivo.");
+            }
+
             var checkInUtc = DateTime.SpecifyKind(request.CheckIn, DateTimeKind.Utc);
             var checkOutUtc = DateTime.SpecifyKind(request.CheckOut, DateTimeKind.Utc);
 
-            // 1. Si el usuario actualiza el estado a "Cancelada"
-            if ((request.Status == "Cancelada" || request.Status == "Cancelled") && res.Status != "Cancelada" && res.Status != "Cancelled")
-            {
-                await CancelAsync(id);
+            if (checkOutUtc.Date <= checkInUtc.Date)
+                throw new Exception("La estancia debe ser de al menos una noche.");
 
-                res.GuestName = request.GuestName;
-                _resRepo.Update(res);
-                await _resRepo.SaveChangesAsync();
-                return res;
-            }
+            // 1. Normalizamos los estados para saber de dónde venimos y a dónde vamos
+            string oldStatus = res.Status?.ToLower().Trim() ?? "";
+            string requestStatusRaw = request.Status == "Confirmed" ? "Confirmada" : request.Status;
+            string newStatus = requestStatusRaw?.ToLower().Trim() ?? "";
 
-            // 2. Revisamos si se cambiaron fechas o tipo de habitación
+            bool wasActive = oldStatus == "confirmada" || oldStatus == "pendiente";
+            bool willBeActive = newStatus == "confirmada" || newStatus == "pendiente";
+
             bool datesOrRoomChanged = res.RoomTypeId != request.RoomTypeId ||
                                       res.CheckIn.Date != checkInUtc.Date ||
                                       res.CheckOut.Date != checkOutUtc.Date;
 
-            // Solo afectamos inventario si hubo cambios
-            if (datesOrRoomChanged && res.Status != "Cancelada" && res.Status != "Cancelled")
+            var inventories = await _invRepo.GetAllAsync();
+
+            // CASO A: Cancelando la reserva (Devolver stock)
+            if (wasActive && !willBeActive)
             {
-                if (checkOutUtc.Date <= checkInUtc.Date)
-                    throw new Exception("La estancia debe ser de al menos una noche.");
-
-                var inventories = await _invRepo.GetAllAsync();
-
-                // A. Restaurar (Liberar) el stock original
                 var oldDays = inventories.Where(i => i.RoomTypeId == res.RoomTypeId
                                                   && i.Date >= res.CheckIn.Date
-                                                  && i.Date < res.CheckOut.Date);
+                                                  && i.Date < res.CheckOut.Date).ToList();
                 foreach (var day in oldDays)
                 {
                     day.AvailableRooms += 1;
                     _invRepo.Update(day);
                 }
-
-                // B. Verificar disponibilidad para las NUEVAS fechas
+            }
+            // CASO B: Reactivando una reserva muerta (TU TRAMPA BLOQUEADA AQUÍ 🚀)
+            else if (!wasActive && willBeActive)
+            {
                 var newDays = inventories.Where(i => i.RoomTypeId == request.RoomTypeId
                                                   && i.Date >= checkInUtc.Date
-                                                  && i.Date < checkOutUtc.Date);
+                                                  && i.Date < checkOutUtc.Date).ToList();
 
                 int totalNights = (checkOutUtc.Date - checkInUtc.Date).Days;
-                bool isAvailable = newDays.Count() == totalNights && newDays.All(i => i.AvailableRooms > 0);
 
-                if (!isAvailable)
+                // Si el registro de inventario ya no existe (Count != totalNights) o no hay habitaciones libres, lo rechazamos
+                if (newDays.Count != totalNights || !newDays.All(i => i.AvailableRooms > 0))
                 {
-                    // Rollback
-                    foreach (var day in oldDays)
-                    {
-                        day.AvailableRooms -= 1;
-                        _invRepo.Update(day);
-                    }
-                    throw new Exception("No hay inventario disponible para las nuevas fechas.");
+                    throw new Exception("No puedes reactivar esta reserva porque el inventario de esos días fue eliminado o está agotado.");
                 }
 
-                // C. Consumir el stock de las nuevas fechas
                 foreach (var day in newDays)
                 {
                     day.AvailableRooms -= 1;
                     _invRepo.Update(day);
                 }
             }
+            // CASO C: La reserva sigue activa, pero cambiaste fechas o habitación
+            else if (wasActive && willBeActive && datesOrRoomChanged)
+            {
+                // Devolver stock viejo
+                var oldDays = inventories.Where(i => i.RoomTypeId == res.RoomTypeId
+                                                  && i.Date >= res.CheckIn.Date
+                                                  && i.Date < res.CheckOut.Date).ToList();
+                foreach (var day in oldDays)
+                {
+                    day.AvailableRooms += 1;
+                    _invRepo.Update(day);
+                }
+
+                // Verificar stock nuevo
+                var newDays = inventories.Where(i => i.RoomTypeId == request.RoomTypeId
+                                                  && i.Date >= checkInUtc.Date
+                                                  && i.Date < checkOutUtc.Date).ToList();
+                int totalNights = (checkOutUtc.Date - checkInUtc.Date).Days;
+
+                if (newDays.Count != totalNights || !newDays.All(i => i.AvailableRooms > 0))
+                {
+                    // Rollback si falla
+                    foreach (var day in oldDays)
+                    {
+                        day.AvailableRooms -= 1;
+                        _invRepo.Update(day);
+                    }
+                    throw new Exception("No hay inventario creado o suficiente para las nuevas fechas solicitadas.");
+                }
+
+                // Consumir stock nuevo
+                foreach (var day in newDays)
+                {
+                    day.AvailableRooms -= 1;
+                    _invRepo.Update(day);
+                }
+            }
+            // CASO D: Modificando fechas de una reserva Cancelada (se permite porque no roba inventario)
+
+      
             res.GuestName = request.GuestName;
             res.RoomTypeId = request.RoomTypeId;
-            res.CheckIn = checkInUtc; 
-            res.CheckOut = checkOutUtc; 
-            res.Status = request.Status == "Confirmed" ? "Confirmada" : request.Status;
+            res.CheckIn = checkInUtc;
+            res.CheckOut = checkOutUtc;
+            res.Status = requestStatusRaw;
 
             _resRepo.Update(res);
             await _resRepo.SaveChangesAsync();
@@ -181,4 +232,4 @@ namespace Altairis.Application.Services
             return res;
         }
     }
-    }
+}
