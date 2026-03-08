@@ -43,24 +43,29 @@ namespace Altairis.Application.Services
 
         public async Task<LoginResponse?> LoginAsync(LoginRequest request)
         {
-            // 1. Buscar usuario por email (incluyendo su Rol)
+            // 1. Buscamos al usuario por correo usando tu repositorio
             var user = await _userRepository.GetByEmailAsync(request.Email);
 
-            // 2. Validar existencia y contraseña
+            // 2. Si el usuario no existe o la contraseña no coincide
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
+                // Retornamos null para que el controlador lance el "Credenciales inválidas"
                 return null;
             }
 
-            // 3. Generar el Token JWT
-            var token = _jwtProvider.Generate(user);
+            if (!user.IsActive)
+            {
+                throw new Exception("Tu cuenta está inactiva. Por favor, contacta con un administrador.");
+            }
 
-            // 4. Retornar respuesta para el Frontend
+            // 4. Si todo está bien y está activo, generamos el Token
+            var token = _jwtProvider.Generate(user); 
+
             return new LoginResponse
             {
                 Token = token,
                 Email = user.Email,
-                Role = user.Role?.Name ?? "Agent"
+                Role = user.Role?.Name ?? "Agente"
             };
         }
     }

@@ -20,7 +20,9 @@ export default function LoginPage() {
 
     try {
       const response = await api.post("/Auth/login", { email, password });
-      localStorage.setItem("altairis_token", response.data.token);
+    localStorage.setItem("altairis_token", response.data.token);
+localStorage.setItem("altairis_role", response.data.role);
+localStorage.setItem("altairis_email", response.data.email);
       router.push("/dashboard");
     } catch (err) {
       const axiosError = err as AxiosError<{ message: string }>;
