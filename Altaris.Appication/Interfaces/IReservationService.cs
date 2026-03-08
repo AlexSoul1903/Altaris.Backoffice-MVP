@@ -11,5 +11,6 @@ namespace Altairis.Application.Interfaces
         Task<IEnumerable<Reservation>> GetByUserIdAsync(int userId);
         Task<Reservation?> GetByIdAsync(int id);
         Task<bool> CancelAsync(int id);
+        Task<Reservation> UpdateAsync(int id, UpdateReservationRequest request);
     }
 }
