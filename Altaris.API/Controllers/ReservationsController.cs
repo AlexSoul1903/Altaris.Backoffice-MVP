@@ -71,7 +71,21 @@ namespace Altairis.API.Controllers
             catch (Exception ex) { return BadRequest(new { message = ex.Message }); }
         }
 
-  
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateReservationRequest request)
+        {
+            try
+            {
+                var result = await _reservationService.UpdateAsync(id, request);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         [HttpPut("{id}/cancel")]
         public async Task<IActionResult> Cancel(int id)
         {

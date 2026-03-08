@@ -93,11 +93,10 @@ export default function DashboardLayout({
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-24 bg-white border-b border-slate-200 flex items-center justify-between px-10 z-10 shadow-sm">
+        <header className="h-24 bg-gray-200 border-b border-slate-200 flex items-center justify-between px-10 z-10 shadow-sm">
           
-          <div className="text-slate-400 font-medium text-sm flex items-center gap-2">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            Buscar en el sistema...
+          <div className="text-slate-400 font-medium text-sm flex items-center gap-2 ">
+          
           </div>
 
           <div className="relative">
