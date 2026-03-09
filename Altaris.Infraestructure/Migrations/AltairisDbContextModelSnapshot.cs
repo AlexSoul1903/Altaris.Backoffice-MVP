@@ -236,6 +236,9 @@ namespace Altaris.Infraestructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<int>("TotalRooms")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -255,7 +258,8 @@ namespace Altaris.Infraestructure.Migrations
                             Capacity = 4,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             HotelId = 1,
-                            Name = "Suite Presidencial"
+                            Name = "Suite Presidencial",
+                            TotalRooms = 3
                         },
                         new
                         {
@@ -263,7 +267,8 @@ namespace Altaris.Infraestructure.Migrations
                             Capacity = 2,
                             CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             HotelId = 1,
-                            Name = "Habitación Estándar"
+                            Name = "Habitación Estándar",
+                            TotalRooms = 2
                         });
                 });
 
@@ -322,7 +327,7 @@ namespace Altaris.Infraestructure.Migrations
                         new
                         {
                             Id = 1,
-                            CreatedAt = new DateTime(2026, 3, 7, 16, 27, 59, 227, DateTimeKind.Utc).AddTicks(3736),
+                            CreatedAt = new DateTime(2026, 3, 8, 22, 36, 3, 161, DateTimeKind.Utc).AddTicks(2797),
                             CreatedBy = "Sistema",
                             Email = "alex@gmail.com",
                             FirstName = "Admin",

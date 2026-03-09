@@ -20,7 +20,7 @@ namespace Altairis.Application.Services
 
         public async Task<IEnumerable<RoomType>> GetAllAsync()
         {
-            // 🔥 SOLUCIÓN: Devolvemos TODAS las habitaciones. 
+            //  Devolvemos TODAS las habitaciones. 
             // El administrador necesita el diccionario completo para que 
             // las tablas de Inventario y Reservas puedan traducir el ID a Nombre.
             return await _roomTypeRepo.GetAllAsync();
@@ -33,7 +33,7 @@ namespace Altairis.Application.Services
 
         public async Task<RoomType> CreateAsync(CreateRoomTypeRequest request)
         {
-            // 🛡️ SEGURIDAD MANTENIDA: Aunque la habitación se vea, el backend 
+            // Aunque la habitación se vea, el backend 
             // NO permite asignarla a un hotel inactivo.
             var hotel = await _hotelRepo.GetByIdAsync(request.HotelId);
             if (hotel == null || !hotel.IsActive)
@@ -43,7 +43,9 @@ namespace Altairis.Application.Services
             {
                 HotelId = request.HotelId,
                 Name = request.Name,
-                Capacity = request.Capacity
+                Capacity = request.Capacity,
+                TotalRooms = request.TotalRooms 
+
             };
 
             await _roomTypeRepo.AddAsync(roomType);
@@ -57,7 +59,7 @@ namespace Altairis.Application.Services
             var roomType = await _roomTypeRepo.GetByIdAsync(id);
             if (roomType == null) throw new Exception("Tipo de habitación no encontrado.");
 
-            // 🛡️ SEGURIDAD MANTENIDA
+
             var hotel = await _hotelRepo.GetByIdAsync(request.HotelId);
             if (hotel == null || !hotel.IsActive)
                 throw new Exception("No se puede asignar la habitación a un hotel inactivo o inexistente.");
@@ -65,7 +67,7 @@ namespace Altairis.Application.Services
             roomType.HotelId = request.HotelId;
             roomType.Name = request.Name;
             roomType.Capacity = request.Capacity;
-
+            roomType.TotalRooms = request.TotalRooms;
             _roomTypeRepo.Update(roomType);
             await _roomTypeRepo.SaveChangesAsync();
 

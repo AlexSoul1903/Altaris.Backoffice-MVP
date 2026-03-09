@@ -15,6 +15,8 @@ namespace Altairis.Application.DTOs
 
         [Required]
         public DateTime CheckOut { get; set; }
+        [Required]
+        public int TotalRooms { get; set; }
 
         [Required]
         public string Status { get; set; } = string.Empty;

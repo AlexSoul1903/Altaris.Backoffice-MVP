@@ -21,7 +21,7 @@ export default function InventoryPage() {
   const [hotelStatusFilter, setHotelStatusFilter] = useState<any>("active");
   const [availabilityFilter, setAvailabilityFilter] = useState<any>("all");
   
-  // 🔥 NUEVOS: Filtros en Cascada
+
   const [hotelFilter, setHotelFilter] = useState<any>("all");
   const [roomFilter, setRoomFilter] = useState<any>("all");
   
@@ -68,13 +68,13 @@ export default function InventoryPage() {
     }
   };
 
+
   const handleSaveInventory = async (formData: any, isEditing: boolean) => {
     try {
-      if (isEditing) {
-        await api.put(`/Inventories/${formData.id}`, formData);
-      } else {
+   
+     
         await api.post("/Inventories", formData);
-      }
+      
       setIsModalOpen(false);
       fetchData();
       setToast({ message: "Inventario guardado correctamente.", type: "success" });
@@ -124,7 +124,6 @@ export default function InventoryPage() {
     return new Date(isoDate).toLocaleDateString('es-ES', { timeZone: 'UTC', weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
   };
 
-  // 🔥 1. Lógica de Filtrado Combinado
   const filteredInventory = inventories.filter(inv => {
     const room = roomTypes.find(rt => rt.id === inv.roomTypeId);
     const hotel = hotels.find(h => h.id === room?.hotelId);
@@ -146,7 +145,7 @@ export default function InventoryPage() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedInventory = filteredInventory.slice(startIndex, startIndex + itemsPerPage);
 
-  // 🔥 3. Opciones Dinámicas para los Desplegables
+
   const hotelOptions = [
     { id: "all", label: "Todos los hoteles" },
     ...hotels.map(h => ({ id: h.id, label: h.name }))
@@ -177,7 +176,7 @@ export default function InventoryPage() {
         )}
       </div>
 
-      {/* PANEL DE FILTROS REORGANIZADO PARA 5 CONTROLES */}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 items-end bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
         <div className="space-y-2">
           <label className="block text-sm font-bold text-slate-700 ml-1">Buscar por Fecha</label>

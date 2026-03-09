@@ -9,6 +9,8 @@ namespace Altairis.Application.DTOs
         [Range(1, 10)]
         public int Capacity { get; set; }
         [Required]
+        public int TotalRooms { get; set; }
+        [Required]
         public int HotelId { get; set; }
     }
 }
