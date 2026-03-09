@@ -10,17 +10,28 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// 1. CONFIGURACIÓN DE CONTROLADORES (Evitar bucles infinitos en JSON)
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
-        // Esta es la clave para romper los bucles infinitos
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
+// 2. CONFIGURACIÓN DE CORS (Permitir acceso desde el Frontend)
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowNextjs", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000") // El puerto del contenedor Next.js
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials(); // Necesario para Auth y Cookies
+    });
+});
+
+// 3. CONFIGURACIÓN DE JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -35,15 +46,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// Registrar el nuevo JwtProvider
 builder.Services.AddScoped<IJwtProvider, JwtProvider>();
 
+// 4. SWAGGER CON SOPORTE PARA BEARER TOKEN
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Altaris API", Version = "v1" });
-
-  
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Altairis API", Version = "v1" });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -51,33 +60,28 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Escribe: 'Bearer' [espacio] y luego tu token.\n\nEjemplo: Bearer eyJhbGciOiJIUzI1..."
+        Description = "Escribe: 'Bearer' [espacio] y luego tu token."
     });
-
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
             new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
             },
             new string[] {}
         }
     });
 });
 
-// Se registra posgre en el servicio de inyección de dependencias, usando la cadena de conexión del appsettings.json
+// 5. BASE DE DATOS (PostgreSQL para Docker)
 builder.Services.AddDbContext<AltairisDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// 6. INYECCIÓN DE DEPENDENCIAS (Repositorios y Servicios)
+builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-// Esta sintaxis especial permite que .NET resuelva CUALQUIER entidad (Hotel, Room, etc.) automáticamente
-builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IHotelService, HotelService>();
 builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
@@ -86,25 +90,34 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowNextjs",
-        policy => policy.WithOrigins("http://localhost:3000") 
-                        .AllowAnyMethod()
-                        .AllowAnyHeader());
-});
 var app = builder.Build();
 
-app.UseCors("AllowNextjs");
-// Configure the HTTP request pipeline.
+// 7. MIGRACIONES AUTOMÁTICAS (Vital para Docker)
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<AltairisDbContext>();
+    context.Database.Migrate();
+}
+
+// 8. PIPELINE DE MIDDLEWARE (El orden es la clave)
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// En Docker (Desarrollo), HTTPS Redirection puede causar conflictos con CORS
+// app.UseHttpsRedirection(); 
+
+app.UseRouting();
+
+// CORS DEBE IR AQUÍ: Después de Routing y antes de Auth
+app.UseCors("AllowNextjs");
+
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();

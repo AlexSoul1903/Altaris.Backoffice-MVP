@@ -14,7 +14,7 @@ export default function HotelsPage() {
   // Estados de Filtros
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<any>("all");
-  // 🔥 NUEVO: Estado para el filtro de estrellas
+  // Estado para el filtro de estrellas
   const [starsFilter, setStarsFilter] = useState<any>("all");
 
   // Estado del Toast
@@ -146,7 +146,6 @@ export default function HotelsPage() {
         </button>
       </div>
 
-      {/* PANEL DE FILTROS ACTUALIZADO A 4 COLUMNAS */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
         <div className="md:col-span-2 space-y-2">
           <label className="block text-sm font-bold text-slate-700 ml-1">Buscar por nombre o locación</label>
@@ -160,7 +159,6 @@ export default function HotelsPage() {
           </div>
         </div>
 
-        {/* 🔥 NUEVO: Desplegable de Estrellas */}
         <Select 
           label="Categoría" 
           value={starsFilter} 

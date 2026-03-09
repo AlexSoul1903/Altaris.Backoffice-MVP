@@ -7,6 +7,7 @@ namespace Altairis.Domain.Entities
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty; 
         public int Capacity { get; set; } // Cuántas personas caben eb una habitación de este tipo
+        public int TotalRooms { get; set; } // Cuántas habitaciones de este tipo hay en el hotel
 
         // Relación con Hotel
         public int HotelId { get; set; }

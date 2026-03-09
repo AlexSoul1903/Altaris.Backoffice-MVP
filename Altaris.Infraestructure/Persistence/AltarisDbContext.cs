@@ -143,8 +143,8 @@ namespace Altairis.Infrastructure.Persistence
             });
             // Categorías iniciales para el Hotel 1
             modelBuilder.Entity<RoomType>().HasData(
-                new RoomType { Id = 1, HotelId = 1, Name = "Suite Presidencial", Capacity = 4 },
-                new RoomType { Id = 2, HotelId = 1, Name = "Habitación Estándar", Capacity = 2 }
+                new RoomType { Id = 1, HotelId = 1, Name = "Suite Presidencial", Capacity = 4, TotalRooms=3 },
+                new RoomType { Id = 2, HotelId = 1, Name = "Habitación Estándar", Capacity = 2,TotalRooms= 2 }
             );
         }
     }

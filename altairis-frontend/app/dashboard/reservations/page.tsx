@@ -15,13 +15,10 @@ export default function ReservationsPage() {
   
   const [toast, setToast] = useState<{ message: string, type: "success" | "error" } | null>(null);
   
-  // Estados para Filtros Avanzados
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<any>("all");
   const [dateSearch, setDateSearch] = useState<string>("");
   const [hotelStatusFilter, setHotelStatusFilter] = useState<any>("active");
-  
-  //Estados para los filtros de Hotel y Habitación
   const [hotelFilter, setHotelFilter] = useState<any>("all");
   const [roomFilter, setRoomFilter] = useState<any>("all");
   
@@ -44,7 +41,6 @@ export default function ReservationsPage() {
       setRoomTypes(roomsRes.data);
       setHotels(hotelsRes.data);
     } catch (err) {
-      console.error("Error al cargar data", err);
       setToast({ message: "No se pudieron cargar las reservas.", type: "error" });
     } finally {
       setLoading(false);
@@ -60,10 +56,11 @@ export default function ReservationsPage() {
       }
       setIsModalOpen(false);
       fetchData();
-      setToast({ message: isEditing ? "Reserva actualizada correctamente." : "Nueva reserva creada.", type: "success" });
+      setToast({ message: isEditing ? "Reserva actualizada." : "Nueva reserva creada.", type: "success" });
     } catch (err: any) {
+      // MEJORA: Captura precisa del error de disponibilidad del backend
       const data = err.response?.data;
-      const errorMessage = typeof data === 'string' ? data : (data?.message || data?.title || "Error de conexión con el servidor.");
+      const errorMessage = typeof data === 'string' ? data : (data?.message || data?.title || "Error al procesar la reserva.");
       setToast({ message: errorMessage, type: "error" });
     }
   };
@@ -75,18 +72,15 @@ export default function ReservationsPage() {
     return new Date(isoDate).toLocaleDateString('es-ES', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
-  //  LÓGICA DE FILTRADO COMBINADO
   const filteredReservations = reservations.filter(res => {
     const room = roomTypes.find(rt => rt.id === res.roomTypeId);
     const hotel = hotels.find(h => h.id === room?.hotelId);
     const isHotelActive = hotel ? hotel.isActive : false;
 
-    // Filtros de texto, estado y fechas
     const matchesSearch = res.guestName?.toLowerCase().includes(searchTerm.toLowerCase()) || res.id.toString().includes(searchTerm);
     const matchesStatus = statusFilter === "all" || res.status === statusFilter;
     const matchHotelStatus = hotelStatusFilter === "all" ? true : hotelStatusFilter === "active" ? isHotelActive : !isHotelActive;
     
-    // Filtros directos de Hotel y Habitación
     const matchHotel = hotelFilter === "all" || hotel?.id.toString() === hotelFilter.toString();
     const matchRoom = roomFilter === "all" || res.roomTypeId.toString() === roomFilter.toString();
     
@@ -101,13 +95,11 @@ export default function ReservationsPage() {
     return matchesSearch && matchesStatus && matchesDate && matchHotelStatus && matchHotel && matchRoom;
   });
 
-
   const hotelOptions = [
     { id: "all", label: "Todos los hoteles" },
     ...hotels.map(h => ({ id: h.id, label: h.name }))
   ];
 
-  // Filtramos las habitaciones para que solo aparezcan las del hotel seleccionado (Cascada)
   const availableRooms = hotelFilter === "all" 
     ? roomTypes 
     : roomTypes.filter(rt => rt.hotelId.toString() === hotelFilter.toString());
@@ -131,9 +123,7 @@ export default function ReservationsPage() {
         </button>
       </div>
 
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 items-end bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-        
         <div className="space-y-2 lg:col-span-2 xl:col-span-2">
           <label className="block text-sm font-bold text-slate-700 ml-1">Buscar huésped o ID</label>
           <div className="flex items-center gap-3 bg-slate-50 px-5 py-4 rounded-2xl border border-slate-100 focus-within:ring-2 focus-within:ring-amber-500 transition-all">
@@ -150,34 +140,9 @@ export default function ReservationsPage() {
           </div>
         </div>
 
-        <Select 
-          label="Filtrar por Hotel"
-          value={hotelFilter}
-          onChange={(val) => { 
-            setHotelFilter(val); 
-            setRoomFilter("all"); // Resetea la habitación si cambia el hotel
-          }}
-          options={hotelOptions}
-        />
-
-        <Select 
-          label="Filtrar por Habitación"
-          value={roomFilter}
-          onChange={(val) => setRoomFilter(val)}
-          options={roomOptions}
-        />
-
-        <Select 
-          label="Estado de Reserva"
-          value={statusFilter}
-          onChange={(val) => setStatusFilter(val)}
-          options={[
-            { id: "all", label: "Todos" },
-            { id: "Confirmada", label: "Confirmadas" },
-            { id: "Pendiente", label: "Pendientes" },
-            { id: "Cancelada", label: "Canceladas" }
-          ]}
-        />
+        <Select label="Filtrar por Hotel" value={hotelFilter} onChange={(val) => { setHotelFilter(val); setRoomFilter("all"); }} options={hotelOptions} />
+        <Select label="Filtrar por Habitación" value={roomFilter} onChange={(val) => setRoomFilter(val)} options={roomOptions} />
+        <Select label="Estado de Reserva" value={statusFilter} onChange={(val) => setStatusFilter(val)} options={[ { id: "all", label: "Todos" }, { id: "Confirmada", label: "Confirmadas" }, { id: "Pendiente", label: "Pendientes" }, { id: "Cancelada", label: "Canceladas" } ]} />
       </div>
 
       <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
