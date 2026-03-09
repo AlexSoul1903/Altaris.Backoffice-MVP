@@ -31,7 +31,7 @@ services:
   # 3. Backend (Web API .NET 8)
   backend:
     build: 
-      context: ./Altairis.Backoffice 
+      context: . # Corregido: El contexto es la carpeta actual donde está el .sln
       dockerfile: Altaris.API/Dockerfile 
     container_name: altairis_api
     ports:
@@ -49,7 +49,7 @@ services:
   # 4. Frontend (Next.js)
   frontend:
     build: 
-      context: ./Altairis.Backoffice/altairis-frontend 
+      context: ./altairis-frontend # Corregido: Ruta directa a la carpeta del front
     container_name: altairis_web
     ports:
       - "3000:3000"
