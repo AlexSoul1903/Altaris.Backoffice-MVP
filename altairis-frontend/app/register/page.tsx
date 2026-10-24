@@ -113,7 +113,7 @@ export default function RegisterPage() {
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   className="w-full px-5 py-4 bg-slate-50 text-slate-900 rounded-2xl focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all placeholder:text-slate-400"
-                  placeholder="Apellido Ejemplo"
+                  placeholder="Apellido"
                   required
                 />
               </div>
